@@ -127,6 +127,30 @@ static void BuildTextureReplacementPage(SettingsPage *page) {
 	page->Setting(&g_Config.iReplacementTextureLoadSpeed).Setup([](View *view) {
 		static_cast<PopupMultiChoice *>(view)->SetChoiceIcon(3, ImageID("I_WARNING"));
 	});
+
+	page->Header("NEXUS PSP profile");
+	page->Description("Apply a balanced texture and performance profile for supported 3D games. This uses your own texture pack files and saves settings per game.");
+	page->Choice("Apply NEXUS 60 FPS texture profile").OnClick([](UI::EventParams &) {
+		if (!PSP_IsInited())
+			return;
+
+		// Keep the profile on the existing PPSSPP per-game settings path. No game,
+		// firmware, or texture content is bundled by this feature.
+		g_Config.bReplaceTextures = true;
+		g_Config.bSaveNewTextures = false;
+		g_Config.iReplacementTextureLoadSpeed = 1;  // Medium.
+		g_Config.iInternalResolution = 2;           // 2x PSP.
+		g_Config.iFrameSkip = 0;
+		g_Config.bAutoFrameSkip = true;
+		g_Config.bSkipBufferEffects = false;
+		g_Config.bSustainedPerformanceMode = true;
+
+		const std::string gameID = g_paramSFO.GetDiscID();
+		g_Config.SaveGameConfig(gameID, "NEXUS PSP profile");
+		System_PostUIMessage(UIMessage::GPU_RENDER_RESIZED);
+		System_PostUIMessage(UIMessage::GPU_CONFIG_CHANGED);
+		g_OSD.Show(OSDType::MESSAGE_INFO, "NEXUS profile applied", 2.0f);
+	});
 }
 
 static void BuildGeneralPage(SettingsPage *page) {
